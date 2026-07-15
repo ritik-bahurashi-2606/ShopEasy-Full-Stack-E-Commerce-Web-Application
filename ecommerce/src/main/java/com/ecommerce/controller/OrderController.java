@@ -52,11 +52,17 @@ public class OrderController {
     // ===== ORDER SUCCESS PAGE =====
     @GetMapping("/success/{orderId}")
     public String orderSuccess(@PathVariable Long orderId, Model model,
-                               @AuthenticationPrincipal UserDetails userDetails) {
+                               @AuthenticationPrincipal UserDetails userDetails,
+                               RedirectAttributes redirectAttributes) {
         User user = userService.findByEmail(userDetails.getUsername());
-        Order order = orderService.getOrderById(orderId);
-        model.addAttribute("order", order);
-        model.addAttribute("cartCount", cartService.getCartItemCount(user));
-        return "order-success";
+        try {
+            Order order = orderService.getOrderByIdForUser(orderId, user);
+            model.addAttribute("order", order);
+            model.addAttribute("cartCount", cartService.getCartItemCount(user));
+            return "order-success";
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("errorMsg", "That order could not be found.");
+            return "redirect:/profile";
+        }
     }
 }
